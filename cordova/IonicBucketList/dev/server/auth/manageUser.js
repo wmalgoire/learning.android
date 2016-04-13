@@ -1,0 +1,91 @@
+var pwdMgr = require('./managePasswords');
+ 
+module.exports = function (server, db, restify) {
+    // unique index
+    db.appUsers.ensureIndex({
+        email: 1
+    }, {
+        unique: true
+    })
+ 
+    server.post('/api/v1/bucketList/auth/register', function (req, res, next) {
+        var user = req.params;
+        
+        if (user.name === undefined) {
+            return next(new restify.InvalidArgumentError('name must be supplied'))
+        }
+
+        if (user.email === undefined) {
+            return next(new restify.InvalidArgumentError('email must be supplied'))
+        }
+
+        if (user.password === undefined) {
+            return next(new restify.InvalidArgumentError('password must be supplied'))
+        }
+
+        pwdMgr.cryptPassword(user.password, function (err, hash) {
+            user.password = hash;
+            console.log("password:", hash);
+            db.appUsers.insert(user,
+                function (err, dbUser) {
+                    if (err) { // duplicate key error
+                        if (err.code == 11000) /* http://www.mongodb.org/about/contributors/error-codes/*/ {
+                            res.writeHead(400, {
+                                'Content-Type': 'application/json; charset=utf-8'
+                            });
+                            res.end(JSON.stringify({
+                                error: err,
+                                message: "A user with this email already exists"
+                            }));
+                        }
+                    } else {
+                        res.writeHead(200, {
+                            'Content-Type': 'application/json; charset=utf-8'
+                        });
+                        dbUser.password = "";
+                        res.end(JSON.stringify(dbUser));
+                    }
+                });
+        });
+        return next();
+    });
+ 
+    server.post('/api/v1/bucketList/auth/login', function (req, res, next) {
+        var user = req.params;
+        if (user.email.trim().length == 0 || user.password.trim().length == 0) {
+            res.writeHead(403, {
+                'Content-Type': 'application/json; charset=utf-8'
+            });
+            res.end(JSON.stringify({
+                error: "Invalid Credentials"
+            }));
+        }
+        console.log("in");
+        db.appUsers.findOne({
+            email: req.params.email
+        }, function (err, dbUser) {
+ 
+ 
+            pwdMgr.comparePassword(user.password, dbUser.password, function (err, isPasswordMatch) {
+ 
+                if (isPasswordMatch) {
+                    res.writeHead(200, {
+                        'Content-Type': 'application/json; charset=utf-8'
+                    });
+                    // remove password hash before sending to the client
+                    dbUser.password = "";
+                    res.end(JSON.stringify(dbUser));
+                } else {
+                    res.writeHead(403, {
+                        'Content-Type': 'application/json; charset=utf-8'
+                    });
+                    res.end(JSON.stringify({
+                        error: "Invalid User"
+                    }));
+                }
+ 
+            });
+        });
+        return next();
+    });
+};

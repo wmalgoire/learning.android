@@ -1,0 +1,47 @@
+﻿<!DOCTYPE html>
+<html ng-app="myMoments" xmlns:mso="urn:schemas-microsoft-com:office:office" xmlns:msdt="uuid:C2F41010-65B3-11d1-A29F-00AA00C14882">
+<head>
+    <meta charset="utf-8" />
+    <title>MyMoments</title>
+
+    <!-- MyMoments references -->
+    <link href="css/index.css" rel="stylesheet" />
+    <link href="Content/bootstrap.css" rel="stylesheet" />
+
+<!--[if gte mso 9]><xml>
+<mso:CustomDocumentProperties>
+<mso:IsMyDocuments msdt:dt="string">1</mso:IsMyDocuments>
+</mso:CustomDocumentProperties>
+</xml><![endif]-->
+</head>
+<body>
+ 
+    <!-- angularjs -->
+    <script src="scripts/angular.js"></script>
+    <script src="scripts/angular-route.js"></script>
+
+    <!-- custom scripts -->
+    <script src="js/app.js"></script>
+    <script src="js/controllers/addMomentController.js"></script>
+    <script src="js/controllers/allMomentsController.js"></script>
+
+    <!-- Cordova reference, this is added to your app when it's built. -->
+    <script src="scripts/ng-cordova.js"></script>
+    <script src="cordova.js"></script>
+
+    <script src="js/index.js"></script>
+
+    <div class="container">
+        <nav class="navbar navbar-inverse navbar-fixed-top">
+            <ul class="nav navbar-nav">
+                <li class="pull-left"><a href="#/">All Moments</a></li>
+                <li class="pull-right"><a href="#/addmoment">Add Moment</a></li>
+            </ul>
+        </nav>
+        <div>
+            <ng-view></ng-view>
+        </div>
+    </div>
+
+</body>
+</html>

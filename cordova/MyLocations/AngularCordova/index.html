@@ -1,0 +1,40 @@
+﻿<!DOCTYPE html>
+<html ng-app="angularCordova">
+<head>
+    <meta charset="utf-8" />
+    <title>AngularCordova</title>
+
+    <!-- AngularCordova references -->
+    <link href="css/index.css" rel="stylesheet" />
+    <link href="Content/bootstrap.css" rel="stylesheet" />
+    <link href="Content/jquery.mobile-1.4.2.css" rel="stylesheet" />
+</head>
+<body>
+    <div data-role="controlgroup">
+        <a href="#/addLocation" data-role="button">Add Location</a>
+        <a href="#/allLocations" data-role="button">All Locations</a>
+    </div>
+
+    <div class="container">
+        <ng-view>
+        </ng-view>
+    </div>
+
+    <!--angularjs-->
+    <script src="scripts/angular.js"></script>
+    <script src="scripts/angular-route.js"></script>
+
+    <!--Custom scripts-->
+    <script src="js/app.js"></script>
+    <script src="js/controllers/addLocation.js"></script>
+    <script src="js/controllers/allLocations.js"></script>
+    <script src="js/controllers/oneLocation.js"></script>
+
+    <!-- Cordova reference, this is added to your app when it's built. -->
+    <script src="scripts/ng-cordova.js"></script>
+    <script src="cordova.js"></script>
+
+    <script src="scripts/platformOverrides.js"></script>
+    <script src="js/index.js"></script>
+</body>
+</html>

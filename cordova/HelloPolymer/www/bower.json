@@ -1,0 +1,23 @@
+{
+  "name": "HelloPolymer",
+  "version": "0.0.1",
+  "homepage": "https://github.com/styxgi/Sandboxes.Cordova",
+  "authors": [
+    "wmalgoire <wm@novel-t.ch>"
+  ],
+  "description": "Hello World with Cordova and Polymer (Material Design)",
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "polymer": "Polymer/polymer#~0.5.1",
+    "webcomponentsjs": "Polymer/webcomponentsjs#~0.5.1",
+    "core-elements": "Polymer/core-elements#~0.5.1",
+    "paper-elements": "Polymer/paper-elements#~0.5.1"
+  }
+}

@@ -1,0 +1,8 @@
+﻿<div ng-repeat="location in locations">
+    <div>
+        <a href="#/location/{{ $index }}">
+            <img class="img-location" style="background:url('{{location.photo}}') 50% 50%;" src="images/transp.png" />
+            <p>{{ location.title }}</p>
+        </a>
+    </div>
+</div>

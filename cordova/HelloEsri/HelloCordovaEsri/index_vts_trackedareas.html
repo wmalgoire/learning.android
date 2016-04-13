@@ -1,0 +1,356 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+    <title>Basic GPS Map</title>
+    <style  type="text/css">
+        body, html {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        #mapDiv {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+        }
+    </style>
+</head>
+<body class="claro">
+    <div id="mapDiv"></div>
+
+    <!-- Load the library and CSS references for ArcGIS API for JavaScript -->
+    <link rel="stylesheet" type="text/css" href="http://js.arcgis.com/3.9/js/esri/css/esri.css">
+    <script type="text/javascript" src="http://js.arcgis.com/3.9compact"></script>
+    <script type="text/javascript" src="cordova.js"></script>
+    <script>
+        var app = {
+            // Application Constructor
+            initialize: function () {
+                this.bindEvents();
+            },
+            // Bind Event Listeners
+            //
+            // Bind any events that are required on startup. Common events are:
+            // 'load', 'deviceready', 'offline', and 'online'.
+            bindEvents: function () {
+                document.addEventListener('deviceready', this.onDeviceReady, false);
+            },
+            // deviceready Event Handler
+            //
+            // The scope of 'this' is the event. In order to call the 'receivedEvent'
+            // function, we must explicity call 'app.receivedEvent(...);'
+            onDeviceReady: function () {
+                app.receivedEvent('deviceready');
+            },
+            // Update DOM on a Received Event
+            receivedEvent: function (id) {
+                console.log('Received Event: ' + id);
+                mapInit();
+            }
+        };
+
+        var mapInit = function() {
+            var URL_VTS_AGS = 'http://arcgis.novel-t.ch/arcgis/rest/services/';
+            var URL_TRACKED_AREAS = URL_VTS_AGS + 'TrackedAreasLayers/MapServer';
+
+            var campaignId = 36;
+            var parentCode = "none"; //If looking at the state level default value must be "none"
+            var childCode = "none";
+            var extentCode = "none";
+            var layerName = "States";
+
+            dojo.require("esri.layers.FeatureLayer");
+            require([
+                "esri/map", "esri/layers/FeatureLayer",
+                "esri/symbols/SimpleFillSymbol", "esri/symbols/SimpleLineSymbol",
+                "esri/renderers/SimpleRenderer", "esri/graphic", "esri/lang",
+                "esri/Color", "dojo/number", "dojo/dom-style",
+                "dijit/TooltipDialog", "dijit/popup", "dojo/domReady!"
+            ], function(
+                Map, FeatureLayer,
+                SimpleFillSymbol, SimpleLineSymbol,
+                SimpleRenderer, Graphic, esriLang,
+                Color, number, domStyle,
+                TooltipDialog, dijitPopup
+            ) {
+                // ************ CONFIG **************** //
+
+                //Default map extent
+                var MAP_EXTENT = {
+                    "xmin": 4.10,
+                    "ymin": 10.55,
+                    "xmax": 10.63,
+                    "ymax": 13.92
+                };
+
+                //Tracked Layers Config
+                var LAYERS_CONFIG = {
+                    "Wards": {
+                        "TrackedAreasLayerId": 0,
+                        "TrackedAreasCodeField": "NIGERIA.dbo.VTS_CampaignTargetedWard_VW.WardCode",
+                        "TrackedAreasCampaignfield": "NIGERIA.dbo.VTS_CampaignTargetedWard_VW.CampaignID",
+                        "TrackedAreasParentCodeField": "NIGERIA.dbo.VTS_CampaignTargetedWard_VW.LGACode",
+                        "TooltipField": "NIGERIA.DBO.Boundary_VaccWards.WardName",
+                        "AllAreasLayerId": "1",
+                        "AllAreasParentCodeField": "LGACode",
+                        "ExtentLayerId": "1",
+                        "ExtentCodeField": "LGACode",
+                        "ContextLayerId": "7, 8, 9",
+                        "TooltipTrackedAreasLayerId": 0,
+                        "TooltipTrackedAreasCampaignfield": "NIGERIA.dbo.VTS_CampaignTargetedWard_VW.CampaignID",
+                        "TooltipField": "NIGERIA.dbo.VTS_CampaignTargetedWard_VW.WardName",
+                        "TooltipCode": "NIGERIA.dbo.VTS_CampaignTargetedWard_VW.WardCode",
+                        "TooltipRedirectURL": "/GeoCoverage/Ward",
+                        "TooltipParamName": "wardCode"
+                    },
+                    "LGAs": {
+                        "TrackedAreasLayerId": 2,
+                        "TrackedAreasCodeField": "NIGERIA.dbo.VTS_CampaignTargetedLga_VW.LGACode",
+                        "TrackedAreasCampaignfield": "NIGERIA.dbo.VTS_CampaignTargetedLga_VW.CampaignID",
+                        "TrackedAreasParentCodeField": "NIGERIA.dbo.VTS_CampaignTargetedLga_VW.StateCode",
+                        "TooltipField": "NIGERIA.DBO.Boundary_VaccLGAs.LGAName",
+                        "AllAreasLayerId": "3",
+                        "AllAreasParentCodeField": "StateCode",
+                        "ExtentLayerId": "5",
+                        "ExtentCodeField": "StateCode",
+                        "ContextLayerId": "8, 9",
+                        "TooltipTrackedAreasLayerId": 2,
+                        "TooltipTrackedAreasCampaignfield": "NIGERIA.dbo.VTS_CampaignTargetedLga_VW.CampaignID",
+                        "TooltipField": "NIGERIA.dbo.VTS_CampaignTargetedLga_VW.LGAName",
+                        "TooltipCode": "NIGERIA.dbo.VTS_CampaignTargetedLga_VW.LGACode",
+                        "TooltipRedirectURL": "/GeoCoverage/Lga",
+                        "TooltipParamName": "lgaCode"
+                    },
+                    "States": {
+                        "TrackedAreasLayerId": 2,
+                        "TrackedAreasCodeField": "NIGERIA.dbo.VTS_CampaignTargetedLga_VW.StateCode",
+                        "TrackedAreasCampaignfield": "NIGERIA.dbo.VTS_CampaignTargetedLga_VW.CampaignID",
+                        "TrackedAreasParentCodeField": "'none'",
+                        "AllAreasLayerId": "5",
+                        "AllAreasParentCodeField": "'none'",
+                        "ExtentLayerId": "9",
+                        "ExtentCodeField": "'none'",
+                        "ContextLayerId": "9",
+                        "TooltipTrackedAreasLayerId": 4,
+                        "TooltipTrackedAreasCampaignfield": "NIGERIA.dbo.VTS_CampaignTargetedState_VW.CampaignID",
+                        "TooltipField": "NIGERIA.dbo.VTS_CampaignTargetedState_VW.StateName",
+                        "TooltipCode": "NIGERIA.dbo.VTS_CampaignTargetedState_VW.StateCode",
+                        "TooltipRedirectURL": "/GeoCoverage/State",
+                        "TooltipParamName": "stateCode"
+                    }
+                };
+
+                //******************* MAP LOGIC **************************//
+
+                var map;
+                var dynamicLayer;
+                var imageParameters;
+                var layersConfig;
+                var visible = [];
+                var layerDefs = [];
+                var highlightGraphic;
+
+                function init() {
+                    require([
+                        "esri/urlUtils"
+                    ], function(urlUtils) {
+
+                        // console.info("$$$"+USE_SECURE_SERVICES);
+                        // reference the layers configs according to the aggregation level
+                        layersConfig = LAYERS_CONFIG[layerName];
+
+                        // Filter the Tracked Areas layer
+                        var filter = layersConfig.TrackedAreasCampaignfield + "=" + campaignId;
+                        if (childCode != "none") {
+                            //If a specific child is requested then only highlight that requested area
+                            filter += " AND " + layersConfig.TrackedAreasCodeField + " = '" + childCode + "'";
+                        } else if (parentCode != "none") {
+                            //At national, state and LGA level show all targeted childs
+                            filter += " AND " + layersConfig.TrackedAreasParentCodeField + " = '" + parentCode + "'";
+                        }
+                        layerDefs[layersConfig.TrackedAreasLayerId] = filter
+
+                        // Filter the All Areas layer
+                        layerDefs[layersConfig.AllAreasLayerId] = layersConfig.AllAreasParentCodeField + " = '" + parentCode + "'";
+                        imageParameters = new esri.layers.ImageParameters();
+                        imageParameters.layerDefinitions = layerDefs;
+                        imageParameters.format = "PNG32";
+
+                        // Build query to retreive the extent
+                        console.log(URL_TRACKED_AREAS + "/" + layersConfig.ExtentLayerId);
+                        var queryTask = new esri.tasks.QueryTask(URL_TRACKED_AREAS + "/" + layersConfig.ExtentLayerId);
+
+                        var query = new esri.tasks.Query();
+                        var arcGisServer101SP1BugNIM086349Workaround = (new Date()).getTime();
+                        query.where = layersConfig.ExtentCodeField + " = '" + extentCode + "' AND " + arcGisServer101SP1BugNIM086349Workaround + " = " + arcGisServer101SP1BugNIM086349Workaround;
+                        query.outFields = ["OBJECTID"];
+                        query.returnGeometry = true;
+
+                        // Send the query and add the map
+                        queryTask.execute(query, addMap);
+                    });
+                }
+
+                function addMap(featureSet) {
+                    var extent;
+
+                    // Set default extent
+                    extent = new esri.geometry.Extent(MAP_EXTENT.xmin, MAP_EXTENT.ymin, MAP_EXTENT.xmax, MAP_EXTENT.ymax, new esri.SpatialReference({ wkid: 4326 }));
+
+                    // If the query launched in the Init function returned an extent we use it
+                    if (featureSet)
+                        extent = esri.graphicsExtent(featureSet.features);
+
+                    // Create map
+                    map = new Map("mapDiv", { extent: extent, fitExtent: true, logo: false, slider: false });
+
+                    // Instantiate layer
+                    dynamicLayer = new esri.layers.ArcGISDynamicMapServiceLayer(
+                        URL_TRACKED_AREAS,
+                        { imageParameters: imageParameters }
+                    );
+
+
+                    // Once the map is loaded make the States and LGAs visible
+                    dojo.connect(dynamicLayer, "onLoad", function(layer) {
+                        layer.setVisibleLayers([layersConfig.TrackedAreasLayerId, layersConfig.AllAreasLayerId, layersConfig.ContextLayerId]);
+                        map.addLayer(layer);
+                    });
+
+
+                    //make map static
+                    map.on("load", function() {
+                        if (childCode == "none") {
+                            map.graphics.enableMouseEvents();
+                            map.graphics.on("mouse-out", function() {
+                                closeDialog();
+                            });
+                            map.graphics.on("click", function(evt) {
+                                var dayStr = "";
+                                var params = getQueryStrings();
+                                var dayParam = params["day"];
+                                if (dayParam && dayParam != "") {
+                                    dayStr = "&day=" + dayParam;
+                                }
+                                console.log("?campaignId=" + campaignId + dayStr + "&" + layersConfig.TooltipParamName + "=" + evt.graphic.attributes[layersConfig.TooltipCode]);
+                                //window.location.href = layersConfig.TooltipRedirectURL + "?campaignId=" + campaignId + dayStr + "&" + layersConfig.TooltipParamName + "=" + evt.graphic.attributes[layersConfig.TooltipCode];
+                            });
+                        }
+                        map.disablePan();
+                        map.disableMapNavigation();
+                    });
+
+
+                    if (childCode == "none") {
+
+                        map.on("mouse-out", function() {
+                            closeDialog();
+                        });
+
+                        initFeatureLayer();
+                    }
+                }
+
+
+                /**
+                * FeatureLayer used to support tootips
+                **/
+                function initFeatureLayer() {
+                    var featureLayer = new FeatureLayer(URL_TRACKED_AREAS + "/" + layersConfig.TooltipTrackedAreasLayerId, {
+                        mode: esri.layers.FeatureLayer.SNAPSHOT,
+                        outFields: [layersConfig.TooltipField, layersConfig.TooltipCode]
+                    });
+
+                    var filter = layersConfig.TooltipTrackedAreasCampaignfield + "=" + campaignId;
+                    if (childCode != "none") {
+                        //If a specific child is requested then only highlight that requested area
+                        filter += " AND " + layersConfig.TrackedAreasCodeField + " = '" + childCode + "'";
+                    } else if (parentCode != "none") {
+                        //At national, state and LGA level show all targeted childs
+                        filter += " AND " + layersConfig.TrackedAreasParentCodeField + " = '" + parentCode + "'";
+                    }
+                    featureLayer.setDefinitionExpression(filter);
+
+                    var highlightSymbol = new SimpleFillSymbol(
+                        SimpleFillSymbol.STYLE_SOLID,
+                        new SimpleLineSymbol(
+                            SimpleLineSymbol.STYLE_SOLID,
+                            new Color([133, 170, 179, 1]),
+                            2
+                        ),
+                        new Color([127, 127, 127, 0])
+                    );
+
+                    map.infoWindow.resize(150, 125);
+
+                    dialog = new TooltipDialog({
+                        id: "tooltipDialog",
+                        style: "position: absolute; width: 100px; font: normal normal normal 10pt Helvetica;z-index:100"
+                    });
+                    dialog.startup();
+
+                    featureLayer.on("load", function(layer) {
+                        featureLayer.opacity = 0;
+                        map.addLayer(featureLayer);
+                    });
+
+
+                    var infoWindowContent = "<b>${" + layersConfig.TooltipField + "}</b>";
+                    featureLayer.on("mouse-over", function(evt) {
+                        closeDialog();
+                        map.setMapCursor("pointer");
+                        var content = esriLang.substitute(evt.graphic.attributes, infoWindowContent);
+
+                        highlightGraphic = new Graphic(evt.graphic.geometry, highlightSymbol, evt.graphic.attributes);
+                        map.graphics.add(highlightGraphic);
+
+                        dialog.setContent(content);
+
+                        domStyle.set(dialog.domNode, "opacity", 0.85);
+                        dijitPopup.open({
+                            popup: dialog,
+                            x: evt.pageX + 15,
+                            y: evt.pageY + 5
+                        });
+                    });
+                }
+
+                function closeDialog() {
+                    map.graphics.clear();
+                    map.setMapCursor("default");
+                    dijitPopup.close(dialog);
+                }
+
+
+                function getQueryStrings() {
+                    var assoc = {};
+                    var decode = function(s) { return decodeURIComponent(s.replace(/\+/g, " ")); };
+                    var queryString = location.search.substring(1);
+                    var keyValues = queryString.split('&');
+
+                    for (var i in keyValues) {
+                        var key = keyValues[i].split('=');
+                        if (key.length > 1) {
+                            assoc[decode(key[0])] = decode(key[1]);
+                        }
+                    }
+
+                    return assoc;
+                }
+
+                setTimeout(function() {
+                    dojo.ready(init);
+                });
+
+
+            });
+        };
+
+        app.initialize();
+    </script>
+</body>
+
+</html>
